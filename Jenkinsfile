@@ -2,6 +2,8 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+        EC2_HOST = '13.60.36.27' // Store in Jenkins credentials for security
+        SSH_KEY = credentials('your-aws-key')
     }
     stages {
         stage('Clone Repository') {
@@ -12,13 +14,14 @@ pipeline {
         stage('Build & Push Backend') {
             steps {
                 sh 'docker build -t surbhi800/mern-backend ./backend'
-                sh 'docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW'
+                sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push surbhi800/mern-backend'
             }
         }
         stage('Build & Push Frontend') {
             steps {
                 sh 'docker build -t surbhi800/mern-frontend ./frontend'
+                sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push surbhi800/mern-frontend'
             }
         }
@@ -26,11 +29,13 @@ pipeline {
             steps {
                 sshagent(['your-aws-key']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@13.60.36.27 <<EOF
+                    ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} <<EOF
+                    docker stop backend_container frontend_container || true
+                    docker rm backend_container frontend_container || true
                     docker pull surbhi800/mern-backend
                     docker pull surbhi800/mern-frontend
-                    docker-compose down || true
-                    docker-compose up -d
+                    docker run -d --name backend_container -p 5000:5000 surbhi800/mern-backend
+                    docker run -d --name frontend_container -p 3000:3000 --link backend_container surbhi800/mern-frontend
                     EOF
                     '''
                 }
