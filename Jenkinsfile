@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git credentialsId: 'github-credentials', url: 'https://github.com/Surbhiiiiiii/mern_app.git'
+                git credentialsId: 'github-credentials',branch:'main', url: 'https://github.com/Surbhiiiiiii/mern_app.git'
             }
         }
         stage('Build & Push Backend') {
