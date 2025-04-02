@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
-        EC2_HOST = '13.60.36.27' // Store in Jenkins credentials for security
+        EC2_HOST = '13.60.25.60' // Store in Jenkins credentials for security
         SSH_KEY = credentials('your-aws-key')
     }
     stages {
